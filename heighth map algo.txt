@@ -1,0 +1,85 @@
+    int Sm = 0;
+    for (int k = 0; k < n; ++k) {
+        std::vector<cell> next(m, cell());
+        next[m - 1] = ((matrix[k][m - 1] == 1) ? cell() : cell(1,1,1,1));
+        for (int i = m - 2; i >= 0; --i) { //заполнение форм.ряда
+
+            if (matrix[k][i] == 0) {
+                if (next[i + 1].len == 0) {
+                    next[i] = cell(1,1,1,1);
+                }
+                else {
+                    next[i] = next[i + 1];
+                    next[i].len++;
+                    //next[i].size++;
+                }
+
+            }
+            else {
+                next[i] = cell();
+            }
+
+        }
+
+        /*
+            есть карта высот, идем по ней, записываем в массив число последовательно идущих высот, покуда некая из них не прервет свое действие
+            коль высота прервала свое действие, вычислим площадь прямоугольника, образованного ею и ежели она больше, чем площадь наибольшего из ранее образованных
+            сей высотой прямоугольников, запишем ее.
+            Продолжаем, покуда все высоты не пркратят свое действие.
+            Взглянем на список площадей и вычислим наибольшую из них.
+
+            Оптимизации: 
+                1. Будем записывать площади не для каждой высоты по отдельности, а для всех сразу.
+                2. Чую я, можно сделать за О(m) но не вразумию как
+        */
+
+        int minh = n;
+        std::vector<int> heighths(n + 1);
+        printf("next row! (Sn = %d)\n", Sm);
+        for (int i = m - 1; i >= 0; --i) {//обработка с учетом предыдущего ряда
+
+            if (next[i].len > 0 && prev[i].len > 0) {
+                next[i].vlen = prev[i].vlen + 1;
+            }
+
+            if (i == m - 1) {
+                heighths[next[i].vlen]++;
+                continue;
+            }
+
+            if (next[i].vlen >= next[i + 1].vlen) {
+                heighths[next[i].vlen]++;
+            }
+            else {
+                printf("\t |fall of height from %d to %d\n", next[i + 1].vlen, next[i].vlen);
+                if (heighths[next[i + 1].vlen] * next[i + 1].vlen > Sm) {
+                    Sm = heighths[next[i + 1].vlen] * next[i + 1].vlen;
+                }
+
+                for (int j = next[i + 1].vlen - 1; j > next[i].vlen; j--) {
+                    //много лишних рассчетов!
+                    if ((heighths[j] + heighths[next[i + 1].vlen]) * j > Sm) {
+                        Sm = (heighths[j] + heighths[next[i + 1].vlen]) * j;
+                    }
+                    heighths[j] = 0;
+                }
+
+                heighths[next[i].vlen] += heighths[next[i + 1].vlen];
+                heighths[next[i + 1].vlen] = 0;
+            }
+
+            printf("|");
+            for (int j = 0; j < n + 1; ++j) {
+                printf("%d ", heighths[j]);
+            }
+            printf("|\n");
+        }
+        printf("row fin (Sn = %d)\n", Sm);
+        for (int j = next[0].vlen; j > 0; j--) {
+            //много лишних рассчетов!
+            if ((heighths[j]) * j > Sm) {
+                Sm = (heighths[j]) * j;
+            }
+            heighths[j - 1] += heighths[j];
+            heighths[j] = 0;
+        }
